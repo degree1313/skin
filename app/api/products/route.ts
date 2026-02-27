@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
 
 type ProductRow = Database["public"]["Tables"]["products"]["Row"];
 
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -32,7 +33,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -81,23 +83,37 @@ export async function POST(req: Request) {
     );
   }
 
-  const { data, error } = await supabase
-    .from("products")
-    .insert({
-      name: trimmedName,
-      active_category,
-      user_id: user.id,
-    })
-    .select()
-    .single();
+  const { error } = await supabase.from("products").insert({
+    name: trimmedName,
+    active_category,
+    user_id: user.id,
+  });
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to create product." },
-      { status: 500 },
-    );
+    const err = error as PostgrestError;
+    // eslint-disable-next-line no-console
+    console.error("products insert error", err);
+
+    if (err.code === "23505") {
+      return NextResponse.json(
+        { error: "You already have a product with this name." },
+        { status: 409 },
+      );
+    }
+
+    const payload =
+      process.env.NODE_ENV !== "production"
+        ? {
+            error: err.message,
+            code: err.code,
+            details: err.details,
+            hint: err.hint,
+          }
+        : { error: "Failed to create product." };
+
+    return NextResponse.json(payload, { status: 400 });
   }
 
-  return NextResponse.json<ProductRow>(data, { status: 201 });
+  return NextResponse.json({ ok: true }, { status: 201 });
 }
 

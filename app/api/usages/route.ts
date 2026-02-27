@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
 
-type UsageRow = Database["public"]["Tables"]["product_usage_logs"]["Row"];
-
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -79,25 +78,32 @@ export async function POST(req: Request) {
     usedAtValue = parsed.toISOString();
   }
 
-  const { data, error } = await supabase
-    .from("product_usage_logs")
-    .insert({
-      product_id,
-      routine_slot,
-      dose,
-      user_id: user.id,
-      used_at: usedAtValue,
-    })
-    .select()
-    .single();
+  const { error } = await supabase.from("product_usage_logs").insert({
+    product_id,
+    routine_slot,
+    dose,
+    user_id: user.id,
+    used_at: usedAtValue,
+  });
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to log usage." },
-      { status: 500 },
-    );
+    const err = error as PostgrestError;
+    // eslint-disable-next-line no-console
+    console.error("product_usage_logs insert error", err);
+
+    const payload =
+      process.env.NODE_ENV !== "production"
+        ? {
+            error: err.message,
+            code: err.code,
+            details: err.details,
+            hint: err.hint,
+          }
+        : { error: "Failed to log usage." };
+
+    return NextResponse.json(payload, { status: 400 });
   }
 
-  return NextResponse.json<UsageRow>(data, { status: 201 });
+  return NextResponse.json({ ok: true }, { status: 201 });
 }
 

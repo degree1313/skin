@@ -85,18 +85,25 @@ export default function LogUsageModal({ open, onClose, products }: Props) {
         body: JSON.stringify(payload),
       });
 
-      const json = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        setError(json?.error ?? "Unable to log usage. Please try again.");
+      if (res.status === 201) {
         setLoading(false);
+        setUsedAt("");
+        onClose();
+        router.refresh();
         return;
       }
 
+      const text = await res.text().catch(() => "");
+      let message = "Unable to log usage. Please try again.";
+      try {
+        const json = text ? JSON.parse(text) : null;
+        if (json && typeof json.error === "string") message = json.error;
+        else if (text) message = text;
+      } catch {
+        if (text) message = text;
+      }
+      setError(message);
       setLoading(false);
-      setUsedAt("");
-      onClose();
-      router.refresh();
     } catch (err) {
       setLoading(false);
       setError("Network error while logging usage. Please try again.");
