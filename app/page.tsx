@@ -13,6 +13,8 @@ import DashboardShell from "@/components/DashboardShell";
 
 type Product = Database["public"]["Tables"]["products"]["Row"];
 type DailyCheckin = Database["public"]["Tables"]["daily_checkins"]["Row"];
+type Profile = Database["public"]["Tables"]["user_profiles"]["Row"] | null;
+type ProductUsageLog = Database["public"]["Tables"]["product_usage_logs"]["Row"];
 
 type RecentLog = {
   id: string;
@@ -23,7 +25,18 @@ type RecentLog = {
   productCategory: ActiveCategory;
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const openCheckin = params?.openCheckin === "1";
+  const suggestedFlaking = params?.suggestedFlaking;
+  const initialFlaking =
+    suggestedFlaking !== undefined
+      ? Math.min(3, Math.max(0, Number(suggestedFlaking)))
+      : undefined;
   const supabase = await createClient();
 
   const {
@@ -58,8 +71,16 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(1);
 
+  const { data: profileData } = await supabase
+    .from("user_profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle();
+
   const products: Product[] = productsData ?? [];
-  const logs = logsData ?? [];
+  const profile: Profile = profileData ?? null;
+  const logs: ProductUsageLog[] = (logsData ?? []) as ProductUsageLog[];
   const todayCheckin: DailyCheckin | null =
     checkinsData && checkinsData.length > 0 ? checkinsData[0] : null;
 
@@ -102,6 +123,13 @@ export default async function DashboardPage() {
       rcSource={rcSource}
       status={status as RecoveryStatus}
       warnings={warnings as IrritationWarning[]}
+      profile={profile}
+      openCheckin={openCheckin}
+      initialFlakingSeverity={
+        initialFlaking !== undefined && Number.isInteger(initialFlaking)
+          ? (initialFlaking as 0 | 1 | 2 | 3)
+          : undefined
+      }
     />
   );
 }

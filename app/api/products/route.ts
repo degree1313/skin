@@ -83,6 +83,7 @@ export async function POST(req: Request) {
     );
   }
 
+  // @ts-expect-error Supabase client infers never for insert when DB types reference auth
   const { error } = await supabase.from("products").insert({
     name: trimmedName,
     active_category,

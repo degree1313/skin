@@ -70,6 +70,30 @@ export interface Database {
           }
         ];
       };
+      user_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          skin_type: "oily" | "combination" | "dry" | "normal" | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          skin_type?: "oily" | "combination" | "dry" | "normal" | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          skin_type?: "oily" | "combination" | "dry" | "normal" | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       daily_checkins: {
         Row: {
           id: string;
@@ -117,6 +141,7 @@ export interface Database {
       active_category: "retinoid" | "aha" | "bha" | "other";
       dose: "half_pea" | "pea" | "dime" | "one_pump" | "two_pumps";
       routine_slot: "am" | "pm";
+      skin_type: "oily" | "combination" | "dry" | "normal";
     };
   };
 }

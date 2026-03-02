@@ -135,6 +135,7 @@ export async function POST(req: Request) {
     );
   }
 
+  // @ts-expect-error Supabase client infers never for insert when DB types reference auth
   const { error } = await supabase.from("daily_checkins").insert({
     user_id: user.id,
     stinging_level,

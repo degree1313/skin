@@ -1,22 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  initialFlakingSeverity?: 0 | 1 | 2 | 3;
 }
 
-export default function DailyCheckinModal({ open, onClose }: Props) {
+export default function DailyCheckinModal({
+  open,
+  onClose,
+  initialFlakingSeverity,
+}: Props) {
   const router = useRouter();
   const [stingingLevel, setStingingLevel] = useState(0);
   const [stingingMinutes, setStingingMinutes] = useState(0);
   const [tightness, setTightness] = useState(false);
-  const [flakingSeverity, setFlakingSeverity] = useState(0);
+  const [flakingSeverity, setFlakingSeverity] = useState(
+    initialFlakingSeverity ?? 0,
+  );
   const [itchiness, setItchiness] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && initialFlakingSeverity !== undefined) {
+      setFlakingSeverity(initialFlakingSeverity);
+    }
+  }, [open, initialFlakingSeverity]);
 
   if (!open) return null;
 
@@ -142,7 +155,15 @@ export default function DailyCheckinModal({ open, onClose }: Props) {
             <select
               className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-slate-50 outline-none focus:border-sky-400"
               value={flakingSeverity}
-              onChange={(e) => setFlakingSeverity(Number(e.target.value))}
+              onChange={(e) =>
+                setFlakingSeverity(
+                  Math.min(3, Math.max(0, Number(e.target.value))) as
+                    | 0
+                    | 1
+                    | 2
+                    | 3,
+                )
+              }
             >
               <option value={0}>0 – none</option>
               <option value={1}>1 – mild (small patches)</option>

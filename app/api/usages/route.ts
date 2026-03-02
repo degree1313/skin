@@ -78,6 +78,7 @@ export async function POST(req: Request) {
     usedAtValue = parsed.toISOString();
   }
 
+  // @ts-expect-error Supabase infers never for insert
   const { error } = await supabase.from("product_usage_logs").insert({
     product_id,
     routine_slot,

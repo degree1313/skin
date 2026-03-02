@@ -13,9 +13,12 @@ import RecentLogs from "@/components/RecentLogs";
 import AddProductModal from "@/components/AddProductModal";
 import LogUsageModal from "@/components/LogUsageModal";
 import DailyCheckinModal from "@/components/DailyCheckinModal";
+import SkinTypeOnboardingModal from "@/components/SkinTypeOnboardingModal";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 type Product = Database["public"]["Tables"]["products"]["Row"];
+type Profile = Database["public"]["Tables"]["user_profiles"]["Row"] | null;
 
 export type RecentLogItem = {
   id: string;
@@ -34,6 +37,9 @@ interface Props {
   rc: number;
   rcSource: RcSource;
   status: RecoveryStatus;
+  profile: Profile;
+  openCheckin?: boolean;
+  initialFlakingSeverity?: 0 | 1 | 2 | 3;
 }
 
 export default function DashboardShell({
@@ -44,13 +50,16 @@ export default function DashboardShell({
   rcSource,
   status,
   warnings,
+  profile,
+  openCheckin = false,
+  initialFlakingSeverity,
 }: Props) {
   const router = useRouter();
   const supabase = createClient();
 
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isLogUsageOpen, setIsLogUsageOpen] = useState(false);
-  const [isCheckinOpen, setIsCheckinOpen] = useState(false);
+  const [isCheckinOpen, setIsCheckinOpen] = useState(openCheckin);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -72,6 +81,12 @@ export default function DashboardShell({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href="/analyze"
+              className="btn-secondary text-xs sm:text-sm"
+            >
+              Analyze skin
+            </Link>
             <button
               type="button"
               onClick={() => setIsCheckinOpen(true)}
@@ -123,6 +138,12 @@ export default function DashboardShell({
       <DailyCheckinModal
         open={isCheckinOpen}
         onClose={() => setIsCheckinOpen(false)}
+        initialFlakingSeverity={initialFlakingSeverity}
+      />
+
+      <SkinTypeOnboardingModal
+        open={profile === null}
+        onClose={() => {}}
       />
     </div>
   );

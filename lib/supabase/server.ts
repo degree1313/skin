@@ -22,7 +22,7 @@ export async function createClient() {
           value: cookie.value,
         }));
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
         try {
           for (const cookie of cookiesToSet) {
             cookieStore.set(cookie.name, cookie.value, cookie.options);
